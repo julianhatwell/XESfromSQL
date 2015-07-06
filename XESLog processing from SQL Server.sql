@@ -11,15 +11,23 @@ DECLARE @logmapping TABLE(
 /* project specific section */
 /* logic for preprocessing log has been moved to separate table value functions, specific to each project */
 /* of course the whole thing may have to be modified if additional attributes are required in the XES file */
-DECLARE @IntakeStartDate datetime = '2015-01-01'
+DECLARE @EarliestIntakeStartDate datetime = '2015-03-01'
+DECLARE @LatestIntakeStartDate datetime = '2015-06-01'
 DECLARE @ProgramGroup nvarchar(255) = 'Diploma%'
 DECLARE @FullTime bit = 1
+DECLARE @UseStatusMappigs bit = 1
 
 --there are two versions of the function, one is the raw status + reason, the other is mapped/interpreted for simplification
 INSERT INTO @logmapping
 SELECT [case], [resource], [transition], [timestamp], [activity]
---FROM KSS.SampleLog_PreProcessing(@IntakeStartDate, @ProgramGroup, @FullTime) AS [trace]
-FROM KSS.SampleLog_PreProcessing_with_mapped_status(@IntakeStartDate, @ProgramGroup, @FullTime) AS [trace]
+FROM KSS.SampleLog_PreProcessing
+	(
+		@EarliestIntakeStartDate
+		, @LatestIntakeStartDate
+		, @ProgramGroup
+		, @FullTime
+		, @UseStatusMappigs
+	) AS [trace]
 ORDER BY [case], [timestamp]
 --take a look at the results to far
 --SELECT * FROM @logmapping
