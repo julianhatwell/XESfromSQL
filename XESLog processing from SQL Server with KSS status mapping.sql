@@ -13,31 +13,32 @@ DECLARE @logmapping TABLE(
 of searching any given log data table, with filters passed as params to the funtion
 in order to render this script completely generic */
 INSERT INTO @logmapping
---SELECT LTRIM(RTRIM([Student])) AS [case]
---, [Resource] AS [resource]
---, 'complete' AS [transition] --may need to include other transitions
---, CONVERT(char(19), [ActivityDate], 126) + '.000+08:00' AS [timestamp] --modify for other time zones
---, srm.Mapping AS [activity]
---FROM [dbo].[SampleKSS_LogData_Reasons] AS [trace]
---INNER JOIN [KSS].[StatusReasonMapping] srm
---ON trace.Stat = srm.IntakeStatus AND trace.Reason = srm.Reason
-----do any filtering you need here
---WHERE ActivityDate >= '2015-01-01'
---AND ProgramGroup LIKE 'Diploma%'
---AND Org = 'Full Time'
---ORDER BY LTRIM(RTRIM([Student])) DESC, ActivityDate
-
 SELECT LTRIM(RTRIM([Student])) AS [case]
 , [Resource] AS [resource]
 , 'complete' AS [transition] --may need to include other transitions
 , CONVERT(char(19), [ActivityDate], 126) + '.000+08:00' AS [timestamp] --modify for other time zones
-, [Stat] + ' \ \ ' + ISNULL([Reason],'') AS [activity]
+, srm.Mapping AS [activity]
 FROM [dbo].[SampleKSS_LogData_Reasons] AS [trace]
+INNER JOIN [KSS].[StatusReasonMapping] srm
+ON trace.Stat = srm.IntakeStatus AND trace.Reason = srm.Reason
 --do any filtering you need here
 WHERE ActivityDate >= '2015-01-01'
 AND ProgramGroup LIKE 'Diploma%'
 AND Org = 'Full Time'
 ORDER BY LTRIM(RTRIM([Student])) DESC, ActivityDate
+
+--SELECT LTRIM(RTRIM([Student])) AS [case]
+--, [Resource] AS [resource]
+--, 'complete' AS [transition] --may need to include other transitions
+--, CONVERT(char(19), [ActivityDate], 126) + '.000+08:00' AS [timestamp] --modify for other time zones
+--, [Stat] + ' \ \ ' + ISNULL([Reason],'') AS [activity]
+--FROM [dbo].[SampleKSS_LogData_Reasons] AS [trace]
+--INNER JOIN
+----do any filtering you need here
+--WHERE ActivityDate >= '2015-01-01'
+--AND ProgramGroup LIKE 'Diploma%'
+--AND Org = 'Full Time'
+--ORDER BY LTRIM(RTRIM([Student])) DESC, ActivityDate
 --SELECT * FROM @logmapping
 
 
