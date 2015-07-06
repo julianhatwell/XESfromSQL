@@ -1,5 +1,5 @@
 --consider modifying data types of table variables to suit needs, other columns can be added (such as cost)
--- but this will need to be built in to the XML object following the XES schema guidelines. (somehting for later)
+-- but this will need to be built in to the XML object following the XES schema guidelines. (something for later)
 DECLARE @logmapping TABLE(
 						[case] char(10)
 						, [resource] varchar(255)
@@ -8,36 +8,20 @@ DECLARE @logmapping TABLE(
 						, [activity] varchar(255)
 						)
 
-/* map the columns in the log table --you should edit this section to match your log data */
-/* next version I will probably switch to using Table-value functions to store multiple patterns 
-of searching any given log data table, with filters passed as params to the funtion
-in order to render this script completely generic */
-INSERT INTO @logmapping
---SELECT LTRIM(RTRIM([Student])) AS [case]
---, [Resource] AS [resource]
---, 'complete' AS [transition] --may need to include other transitions
---, CONVERT(char(19), [ActivityDate], 126) + '.000+08:00' AS [timestamp] --modify for other time zones
---, srm.Mapping AS [activity]
---FROM [dbo].[SampleKSS_LogData_Reasons] AS [trace]
---INNER JOIN [KSS].[StatusReasonMapping] srm
---ON trace.Stat = srm.IntakeStatus AND trace.Reason = srm.Reason
-----do any filtering you need here
---WHERE ActivityDate >= '2015-01-01'
---AND ProgramGroup LIKE 'Diploma%'
---AND Org = 'Full Time'
---ORDER BY LTRIM(RTRIM([Student])) DESC, ActivityDate
+/* project specific section */
+/* logic for preprocessing log has been moved to separate table value functions, specific to each project */
+/* of course the whole thing may have to be modified if additional attributes are required in the XES file */
+DECLARE @IntakeStartDate datetime = '2015-01-01'
+DECLARE @ProgramGroup nvarchar(255) = 'Diploma%'
+DECLARE @FullTime bit = 1
 
-SELECT LTRIM(RTRIM([Student])) AS [case]
-, [Resource] AS [resource]
-, 'complete' AS [transition] --may need to include other transitions
-, CONVERT(char(19), [ActivityDate], 126) + '.000+08:00' AS [timestamp] --modify for other time zones
-, [Stat] + ' \ \ ' + ISNULL([Reason],'') AS [activity]
-FROM [dbo].[SampleKSS_LogData_Reasons] AS [trace]
---do any filtering you need here
-WHERE ActivityDate >= '2015-01-01'
-AND ProgramGroup LIKE 'Diploma%'
-AND Org = 'Full Time'
-ORDER BY LTRIM(RTRIM([Student])) DESC, ActivityDate
+--there are two versions of the function, one is the raw status + reason, the other is mapped/interpreted for simplification
+INSERT INTO @logmapping
+SELECT [case], [resource], [transition], [timestamp], [activity]
+--FROM KSS.SampleLog_PreProcessing(@IntakeStartDate, @ProgramGroup, @FullTime) AS [trace]
+FROM KSS.SampleLog_PreProcessing_with_mapped_status(@IntakeStartDate, @ProgramGroup, @FullTime) AS [trace]
+ORDER BY [case], [timestamp]
+--take a look at the results to far
 --SELECT * FROM @logmapping
 
 
@@ -50,8 +34,6 @@ The essential and most commonly used optional data is already included here.
 
 Other columns could be added, but to be used they will need to be 
 correctly built into the structure of the XES by modifying the SQLXML statements below. */
-
-
 
 /* create xml object of unique cases - this will be used for the trace (parent) nodes in the XES */
 DECLARE @trace TABLE([case] char(10) NOT NULL PRIMARY KEY, [trace] xml)
