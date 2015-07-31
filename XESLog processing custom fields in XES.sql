@@ -6,6 +6,12 @@ DECLARE @logmapping TABLE(
 						, [transition] varchar(50)
 						, [timestamp] varchar(50)
 						, [activity] varchar(255)
+						, [ProgramCode] varchar(255)
+						, [ProgramGroup] varchar(255)
+						, [ProgramPartner] varchar(255)
+						, [Reason] varchar(255)
+						, [Outcome] varchar(255)
+						, [Org] varchar(255)
 						)
 
 /* project specific section */
@@ -19,7 +25,7 @@ DECLARE @UseStatusMappigs bit = 1
 
 --function calls a main view that has pre-processed the data, passing in the search parameters and returning the key columns for the XML
 INSERT INTO @logmapping
-SELECT [case], [resource], [transition], [timestamp], [activity]
+SELECT [case], [resource], [transition], [timestamp], [activity], [ProgramCode], [ProgramGroup], [ProgramPartner], [Reason], [Outcome], [Org]
 FROM [KSS].[SampleLog_PreProcessing]
 	(
 		@EarliestIntakeStartDate
@@ -58,6 +64,11 @@ SELECT [case]
 , [transition]
 , [timestamp]
 , [activity]
+, [ProgramCode]
+, [ProgramGroup]
+, [Reason]
+, [Outcome]
+, [Org]
 FROM @logmapping AS [trace]
 ORDER BY [case], [timestamp]
 FOR XML PATH('event'), ROOT('log')
@@ -75,6 +86,11 @@ SELECT [log].[event].value('(case)[1]', 'varchar(50)'),
 <date value="{timestamp}" key="time:timestamp"/>
 <string value="{transition}" key="lifecycle:transition"/>
 <string value="{activity}" key="concept:name"/>
+<string value="{ProgramCode}" key="ProgramCode"/>
+<string value="{ProgramGroup}" key="ProgramGroup"/>
+<string value="{Reason}" key="Reason"/>
+<string value="{Outcome}" key="Outcome"/>
+<string value="{Org}" key="Org"/>
 </event>' 
 ) AS [event]
 FROM @eventlog.nodes('log/event') [log]([event])
@@ -122,6 +138,11 @@ SET @XESlog.modify('
 				<date value="1970-01-01T00:00:00.000+08:00" key="time:timestamp"/>
 				<string value="UNKNOWN" key="lifecycle:transition"/>
 				<string value="UNKNOWN" key="concept:name"/>
+				<string value="UNKNOWN" key="ProgramCode"/>
+				<string value="UNKNOWN" key="ProgramGroup"/>
+				<string value="" key="Reason"/>
+				<string value="" key="Outcome"/>
+				<string value="UNKNOWN" key="Org"/>
 			</global>
 			, <classifier name="Activity classifier" keys="concept:name lifecycle:transition"/>
 			, <string value="Manual Log Export from SQL Server" key="concept:name"/>
